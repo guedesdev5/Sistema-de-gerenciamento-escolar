@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tela de login</title>
+    
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(0, 0, 129);
+        }
+        .oi{
+            background-color: rgba(0, 0, 0, 0.9);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            padding: 80px;
+            border-radius: 15px;
+            color: #fff;
+        }
+        input{
+            padding: 15px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            border-radius: 10px;
+            width: 88%;
+        }
+        button{
+            background-color: dodgerblue;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            text-transform: uppercase;
+            font-weight: bold;
+            
+        }
+        button:hover{
+            background-color: deepskyblue;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        h1{
+            color:white;
+        }
+        a{
+            color: #5568FE;
+            text-decoration: none;
+        }
+
+        
+    </style>
+
+</head>
+<body>
+    <div class="oi">
+        <h1>Login Aluno</h1>
+            <input type="text" placeholder="Email" id="txtEmail" name="txtEmail" required>
+            <br><br>
+            <input type="password" placeholder="Senha" id="txtSenha" name="txtSenha" required>
+            
+            <br><br>
+            <button id="btnLogin">Enviar</button>
+            <div id="divResposta">
+
+            </div>
+
+    </div>
+</body>
+<script>
+    const URI = '/loginAluno';
+    const txtEmail = document.getElementById("txtEmail");
+    const txtSenha = document.getElementById("txtSenha");
+    const btnLogin = document.getElementById("btnLogin");
+    const divResposta = document.getElementById("divResposta");
+
+    btnLogin.onclick = onclick_btnLogin;
+
+    function onclick_btnLogin(){
+        const email = txtEmail.value;
+        const senha = txtSenha.value;
+        const obj ={
+            email:email, 
+            senha:senha
+            
+        }
+        fetch_post_verificarLogin(obj);
+    }
+
+    function fetch_post_verificarLogin(obj){
+        
+        const textoJson = JSON.stringify(obj);
+        const requisicao = fetch(URI, {
+            method:'post',
+            headers:{
+                'Accept':'application/json',
+                'Content-Type':'application/json',
+                'Authorization':''
+            },
+            body:textoJson
+        });
+        requisicao.then((response)=>{return response.text();}).then((jsonTextoResposta)=>{
+            
+            const obj = JSON.parse(jsonTextoResposta);
+            
+            if(obj.status==true){
+                localStorage.setItem('token', obj.token)
+                localStorage.setItem('payload', JSON.stringify(obj.dados))
+                window.location="PainelAluno.html"
+               
+                
+            }else{
+                alert('Usuário não logado!')
+            }
+
+           
+        });
+        requisicao.catch((erro)=>{
+            console.log(erro)
+        })
+}
+</script>
+
+</html>

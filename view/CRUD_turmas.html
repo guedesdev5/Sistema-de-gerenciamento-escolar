@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turmas</title>
+    <style>
+        .v{
+            background-color:rgb(60, 161, 60);
+            color:white;
+        }
+        .ver{
+            background-color: rgb(204, 153, 58);
+            color:white;
+        }
+        .a{
+            background-color: rgb(41, 41, 146);
+            color:white;
+        }
+        .button{
+            background-color: dodgerblue;
+            border: none;
+            width: 10%;
+            border-radius: 3px;
+            font-size: 14px;
+            text-decoration: none;
+            color:white;
+            
+        }
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(0, 0, 129);
+        }
+        .oi{
+            background-color: rgba(114, 112, 112, 0.9);
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            padding: 40px;
+            border-radius: 15px;
+            color: black;
+            font-size: 16pt;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="oi">
+    <button class="button"><a href="PainelProfTp2.html">Voltar</a></button><br><br>
+    <div>
+        Id Turma:<input type="text" id="txtregistro" ><br>
+        Nome: <input type="text" id="txtnome" ><br>
+        Abreviação: <input type="text" id="txtemail" ><br>
+        Ano: <input type="text" id="txttipo" ><br><br>
+        <button class="v" id="btnNovo">Nova Turma</button>
+        <button class="ver" id="btnAtualizar">Atualizar</button>
+        <button class="a" id="btnLimpa">Limpar</button>
+    </div>
+    
+    Filtro: <input type="text" id="txtFiltro"><br>
+    <table border="1" id="tblProf">
+        <th>Id Turma</th>
+        <th>Nome</th>
+        <th>Abreviação</th>
+        <th>Ano</th>
+        <th>Excluir</th>
+        <th>Selecionar</th>
+    </table>
+</div>
+</body>
+<script>
+    const token = localStorage.getItem("token")
+    const URI = "/turmas";
+    const txtFiltro = document.getElementById("txtFiltro")
+    const tblProf = document.getElementById("tblProf")
+
+    const txtidTurma = document.getElementById("txtregistro")
+    const txtnome = document.getElementById("txtnome")
+    const txtabreviacao = document.getElementById("txtemail")
+    const txtano = document.getElementById("txttipo")
+
+
+    const btnNovo = document.getElementById("btnNovo");
+    const btnAtualizar = document.getElementById("btnAtualizar")
+    const btnLimpa = document.getElementById("btnLimpa")
+    btnLimpa.onclick = onclick_btnLimpa
+    btnNovo.onclick = onclick_btnNovo
+    btnAtualizar.onclick= onclick_btnAtualizar
+
+    let professores_Json={};
+
+    txtFiltro.onkeyup = onkeyup_txtFiltro
+    fech_professores_get();
+
+    function onclick_btnLimpa(){
+        txtidTurma.value = null
+        txtnome.value = null
+        txtabreviacao.value = null
+        txtano.value = null
+
+    }
+
+    function onclick_btnNovo(){
+        const idTurma = txtidTurma.value
+        const nome = txtnome.value
+        const abreviacao = txtabreviacao.value
+        const ano = txtano.value
+        
+        const novaTurma ={
+            idTurma: idTurma,
+            nome: nome,
+            abreviacao:abreviacao,
+            ano:ano
+        }
+        fech_professores_post(novaTurma)
+    }
+
+    function onclick_btnAtualizar(){
+        const idTurma = txtidTurma.value
+        const nome = txtnome.value
+        const abreviacao = txtabreviacao.value
+        const ano = txtano.value
+        
+        const novaTurma ={
+            idTurma: idTurma,
+            nome: nome,
+            abreviacao:abreviacao,
+            ano:ano
+        }
+        fech_professores_put(novaTurma, idTurma)
+    }
+
+
+    function onkeyup_txtFiltro(){
+        let filtro = txtFiltro.value;
+        construirTabela(filtro);
+    }
+    
+    function fech_professores_post(novoProf){
+
+        const jsonProf = JSON.stringify(novoProf);
+
+        const requisicao = fetch(URI,{
+            method: 'post',
+            headers:{
+                'Accept': 'application/json',
+                'Content-Type':'application/json',
+                'Authorization':"Bearer <"+token+">"
+            },
+            body:jsonProf
+        })
+
+        requisicao.then((response)=>{return response.text();}).then((jsonTextoResposta)=>{
+            
+            const obj = JSON.parse(jsonTextoResposta);
+        
+            console.log(jsonTextoResposta)
+            if(obj.status==true){
+
+                localStorage.setItem('token', token)
+                fech_professores_get()
+                
+            }else{
+              
+            }
+
+        
+        });
+        requisicao.catch((erro)=>{
+            console.log(erro)
+        })
+    }
+
+
+
+    function fech_professores_get(){
+
+        const requisicao = fetch(URI,{
+            method: 'get',
+            headers:{
+                'Accept': 'application/json',
+                'Content-Type':'application/json',
+                'Authorization':"Bearer <"+token+">"
+            },
+        })
+
+        requisicao.then((response)=>{return response.text();}).then((jsonTextoResposta)=>{
+            
+            const obj = JSON.parse(jsonTextoResposta);
+           
+            console.log(jsonTextoResposta)
+            if(obj.status==true){
+
+                localStorage.setItem('token', token)
+                professores_Json = obj.dados;
+                construirTabela()
+                
+            }else{
+                divResposta.append(document.createTextNode("Login inválido"));
+            }
+
+           
+        });
+        requisicao.catch((erro)=>{
+            console.log(erro)
+        })
+    }
+
+
+    function fech_professores_put(novoProf, registro){
+
+            const jsonProf = JSON.stringify(novoProf);
+            const rota = URI +"/"+registro
+
+            const requisicao = fetch(rota,{
+                method: 'put',
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json',
+                    'Authorization':"Bearer <"+token+">"
+                },
+                body:jsonProf
+            })
+
+            requisicao.then((response)=>{return response.text();}).then((jsonTextoResposta)=>{
+                
+                const obj = JSON.parse(jsonTextoResposta);
+
+                console.log(jsonTextoResposta)
+                if(obj.status==true){
+
+                    localStorage.setItem('token', token)
+                    fech_professores_get()
+                    
+                }else{
+                
+                }
+
+
+            });
+            requisicao.catch((erro)=>{
+                console.log(erro)
+            })
+        }
+
+        function fech_professores_delete(registro){
+
+            const rota = URI +"/"+registro
+
+            const requisicao = fetch(rota,{
+                method: 'delete',
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json',
+                    'Authorization':"Bearer <"+token+">"
+                },
+            })
+
+            requisicao.then((response)=>{return response.text();}).then((jsonTextoResposta)=>{
+                
+                const obj = JSON.parse(jsonTextoResposta);
+
+                console.log(jsonTextoResposta)
+                if(obj.status==true){
+
+                    localStorage.setItem('token', token)
+                    fech_professores_get()
+                    
+                }else{
+                
+                }
+
+
+            });
+            requisicao.catch((erro)=>{
+                console.log(erro)
+            })
+}
+
+
+    function limparTabela(){
+        let qtdLinha = tblProf.rows.length;
+        for (let i=1;i<qtdLinha;i++){
+            tblProf.deleteRow(1)
+        }
+
+    }
+
+    function construirTabela(filtro){
+        limparTabela();
+        for(let turmas of professores_Json){
+
+            if(filtro!=null){
+                let abreviacao = turmas.abreviacao.toLowerCase();
+                filtro = filtro.toLowerCase();
+                if(abreviacao.includes(filtro)==false){
+                    continue;
+                }
+            }
+
+            const linha = document.createElement("tr")
+            const colunaIdTurma = document.createElement("td")
+            const colunaNome = document.createElement("td")
+            const colunaAbreviacao = document.createElement("td")
+            const colunaAno = document.createElement("td")
+            const colunaExcluir = document.createElement("td")
+            const colunaSelecionar = document.createElement("td")
+
+            const btnExcluir = document.createElement("button")
+            btnExcluir.append(document.createTextNode("Excluir"))
+            btnExcluir.onclick=function(){
+                const idTurma = turmas.idTurma
+                const conf = confirm("Tem certeza?");
+                if(conf==true){
+                    fech_professores_delete(idTurma)
+                }
+                
+            }
+
+            const btnSelecionar = document.createElement("button")
+            btnSelecionar.append(document.createTextNode("Selecionar"))
+            btnSelecionar.onclick=function(){
+                txtidTurma.value = turmas.idTurma
+                txtnome.value = turmas.nome
+                txtabreviacao.value = turmas.abreviacao
+                txtano.value = turmas.ano
+            }
+
+            colunaIdTurma.append(document.createTextNode(turmas.idTurma))
+            colunaNome.append(document.createTextNode(turmas.nome))
+            colunaAbreviacao.append(document.createTextNode(turmas.abreviacao))
+            colunaAno.append (document.createTextNode(turmas.ano))
+            colunaExcluir.append(btnExcluir)
+            colunaSelecionar.append(btnSelecionar)
+            
+            linha.appendChild(colunaIdTurma)
+            linha.appendChild(colunaNome)
+            linha.appendChild(colunaAbreviacao)
+            linha.appendChild(colunaAno)
+            linha.appendChild(colunaExcluir)
+            linha.appendChild(colunaSelecionar)
+
+            tblProf.appendChild(linha)
+        }
+
+        
+    }
+
+</script>
+</html>
